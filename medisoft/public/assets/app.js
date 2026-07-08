@@ -834,17 +834,113 @@ async function initAccount() {
 }
 
 async function initAdmin() {
+  const logoutAdmin = async () => {
+    try {
+      await sendJson("/api/auth/logout", "POST");
+      window.location.href = "/";
+    } catch (e) {
+      showToast({ type: "error", message: e.message || "Could not logout" });
+    }
+  };
+  qs("admin-logout-btn")?.addEventListener("click", logoutAdmin);
+  qs("admin-sidebar-logout-btn")?.addEventListener("click", logoutAdmin);
   const loadAdminProducts = async () => {
     const root = qs("admin-products");
     if (!root) return;
     const products = await getJson("/api/products");
+    const q = (qs("admin-products-search")?.value || "").trim().toLowerCase();
     root.innerHTML = "";
-    products.forEach((p) => {
+    products
+      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q))
+      .forEach((p) => {
       const li = document.createElement("li");
       li.className = "py-2 text-sm";
-      li.innerHTML = `<div class="flex items-center justify-between gap-2"><p>${p.name} <span class="text-xs text-muted-foreground">(${p.slug})</span></p><span class="text-xs text-muted-foreground">${money(p.price_cents)}${Number(p.discount_percent || 0) ? ` · -${p.discount_percent}%` : ""}</span></div>`;
+      li.innerHTML = `<div class="flex items-center justify-between gap-2"><p>${p.name} <span class="text-xs text-muted-foreground">/${p.slug}</span></p><div class="flex items-center gap-2"><span class="text-xs text-muted-foreground">${money(p.price_cents)}${Number(p.discount_percent || 0) ? ` · -${p.discount_percent}%` : ""}</span><button class="delete-product inline-flex rounded-md border px-2 py-1 text-xs text-destructive">Delete</button></div></div>`;
+      li.querySelector(".delete-product")?.addEventListener("click", async () => {
+        try {
+          await sendJson(`/api/admin/products/${p.id}`, "DELETE");
+          showToast(`${p.name} removed`);
+          await loadAdminProducts();
+        } catch (e) {
+          showToast({ type: "error", message: e.message || "Could not delete product" });
+        }
+      });
       root.appendChild(li);
     });
+  };
+  const loadProductMetaOptions = async () => {
+    const catSelect = qs("admin-product-category");
+    const colSelect = qs("admin-product-collection");
+    if (!catSelect && !colSelect) return;
+    const [cats, cols] = await Promise.all([
+      getJson("/api/categories").catch(() => []),
+      getJson("/api/collections").catch(() => []),
+    ]);
+    if (catSelect) {
+      const current = catSelect.value;
+      catSelect.innerHTML = "";
+      cats.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c.slug;
+        opt.textContent = c.name;
+        catSelect.appendChild(opt);
+      });
+      if (current) catSelect.value = current;
+    }
+    if (colSelect) {
+      const current = colSelect.value;
+      colSelect.innerHTML = "";
+      cols.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c.slug;
+        opt.textContent = c.name;
+        colSelect.appendChild(opt);
+      });
+      if (current) colSelect.value = current;
+    }
+  };
+  const loadAdminCatalog = async () => {
+    const cRoot = qs("admin-categories");
+    const colRoot = qs("admin-collections");
+    if (!cRoot && !colRoot) return;
+    const [cats, cols] = await Promise.all([
+      getJson("/api/categories").catch(() => []),
+      getJson("/api/collections").catch(() => []),
+    ]);
+    if (cRoot) {
+      cRoot.innerHTML = "";
+      cats.forEach((c) => {
+        const li = document.createElement("li");
+        li.className = "py-2 flex items-center justify-between gap-2 text-sm";
+        li.innerHTML = `<span>${c.name} <span class="text-xs text-muted-foreground">/${c.slug}</span></span><button class="delete-category inline-flex rounded-md border px-2 py-1 text-xs text-destructive">Delete</button>`;
+        li.querySelector(".delete-category")?.addEventListener("click", async () => {
+          try {
+            await sendJson(`/api/admin/categories/${c.id}`, "DELETE");
+            await loadAdminCatalog();
+          } catch (e) {
+            showToast({ type: "error", message: e.message || "Could not delete category" });
+          }
+        });
+        cRoot.appendChild(li);
+      });
+    }
+    if (colRoot) {
+      colRoot.innerHTML = "";
+      cols.forEach((c) => {
+        const li = document.createElement("li");
+        li.className = "py-2 flex items-center justify-between gap-2 text-sm";
+        li.innerHTML = `<span>${c.name} <span class="text-xs text-muted-foreground">/${c.slug}</span></span><button class="delete-collection inline-flex rounded-md border px-2 py-1 text-xs text-destructive">Delete</button>`;
+        li.querySelector(".delete-collection")?.addEventListener("click", async () => {
+          try {
+            await sendJson(`/api/admin/collections/${c.id}`, "DELETE");
+            await loadAdminCatalog();
+          } catch (e) {
+            showToast({ type: "error", message: e.message || "Could not delete collection" });
+          }
+        });
+        colRoot.appendChild(li);
+      });
+    }
   };
   if (qs("revenueChart") || qs("admin-stat-revenue")) {
     try {
@@ -877,11 +973,29 @@ async function initAdmin() {
     root.innerHTML = "";
     orders.forEach((o) => {
       const li = document.createElement("li");
-      li.className = "py-2 border-b text-sm";
+      li.className = "py-3 text-sm";
+      const deliveryDate = o.delivery_date ? new Date(o.delivery_date).toLocaleDateString([], { month: "short", day: "numeric" }) : "—";
+      const statusBadge = o.status === "delivered"
+        ? `<span class="inline-flex rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">Delivered</span>`
+        : o.status === "pending_payment"
+          ? `<span class="inline-flex rounded-md border px-2 py-1 text-xs text-muted-foreground">Awaiting payment</span>`
+          : `<span class="inline-flex rounded-md bg-secondary px-2 py-1 text-xs">Paid · awaiting</span>`;
       li.innerHTML = `
-        <div class="flex items-center justify-between gap-2">
-          <p>${o.reference} — ${o.customer_name} — ${o.status}</p>
-          ${o.status === "paid" ? `<button class="deliver-btn inline-flex rounded-md border px-2 py-1 text-xs">Deliver</button>` : ""}
+        <div class="grid gap-2 md:grid-cols-[1.1fr_1fr_0.9fr_0.8fr_0.8fr] md:items-center md:gap-3">
+          <div>
+            <p class="font-medium">${o.reference}</p>
+            <p class="text-xs text-muted-foreground">${new Date(o.created_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</p>
+          </div>
+          <div>
+            <p>${o.customer_name}</p>
+            <p class="text-xs text-muted-foreground">${o.email}</p>
+          </div>
+          <div class="text-xs text-muted-foreground">${deliveryDate}${o.delivery_window ? `<br>${o.delivery_window}` : ""}</div>
+          <div class="tabular-nums">${money(o.total_cents)}</div>
+          <div class="flex items-center gap-2">
+            ${statusBadge}
+            ${o.status === "paid" ? `<button class="deliver-btn inline-flex rounded-md border px-2 py-1 text-xs">Deliver</button>` : ""}
+          </div>
         </div>
       `;
       li.querySelector(".deliver-btn")?.addEventListener("click", async () => {
@@ -903,11 +1017,19 @@ async function initAdmin() {
       root.innerHTML = "";
       reviews.forEach((r) => {
         const li = document.createElement("li");
-        li.className = "py-2 border-b text-sm";
+        li.className = "py-3 text-sm";
+        const stars = Array.from({ length: Number(r.rating || 0) }).map(() => "★").join("");
         li.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <p>${r.author} (${r.rating}/5) on ${r.product_name}</p>
-            <button class="delete-review inline-flex rounded-md border px-2 py-1 text-xs">Delete</button>
+          <div class="flex items-start gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-medium">${r.author}</span>
+                <span class="text-primary">${stars}</span>
+                <span class="text-xs text-muted-foreground">on ${r.product_name} · ${new Date(r.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+              </div>
+              ${r.comment ? `<p class="mt-1 text-sm text-muted-foreground">${r.comment}</p>` : ""}
+            </div>
+            <button class="delete-review inline-flex rounded-md border px-2 py-1 text-xs text-destructive">Delete</button>
           </div>
         `;
         li.querySelector(".delete-review")?.addEventListener("click", async () => {
@@ -925,11 +1047,19 @@ async function initAdmin() {
       root.innerHTML = "";
       msgs.forEach((m) => {
         const li = document.createElement("li");
-        li.className = "py-2 border-b text-sm";
+        li.className = "py-3 text-sm";
         li.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <p>${m.name}: ${m.subject || "Message"}</p>
-            <button class="delete-message inline-flex rounded-md border px-2 py-1 text-xs">Delete</button>
+          <div class="flex items-start gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-medium">${m.name}</span>
+                <a href="mailto:${m.email}" class="text-xs text-primary underline">${m.email}</a>
+                <span class="text-xs text-muted-foreground">${new Date(m.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+              </div>
+              ${m.subject ? `<p class="mt-1 text-sm font-medium">${m.subject}</p>` : ""}
+              <p class="mt-1 text-sm text-muted-foreground">${m.body}</p>
+            </div>
+            <button class="delete-message inline-flex rounded-md border px-2 py-1 text-xs text-destructive">Delete</button>
           </div>
         `;
         li.querySelector(".delete-message")?.addEventListener("click", async () => {
@@ -945,7 +1075,18 @@ async function initAdmin() {
     const root = qs("admin-activity");
     if (root) {
       root.innerHTML = "";
-      acts.forEach((a) => { const li = document.createElement("li"); li.className = "py-2 border-b text-sm"; li.textContent = `${a.reference} · ${a.status} · ${a.note}`; root.appendChild(li); });
+      acts.forEach((a) => {
+        const li = document.createElement("li");
+        li.className = "py-3 text-sm";
+        li.innerHTML = `
+          <div class="grid gap-2 md:grid-cols-[1fr_0.9fr_1.4fr] md:gap-3">
+            <span class="font-medium">${a.reference}</span>
+            <span class="text-xs text-muted-foreground">${a.status}</span>
+            <span class="text-xs text-muted-foreground">${a.note}</span>
+          </div>
+        `;
+        root.appendChild(li);
+      });
     }
   } catch {}
   qs("admin-upload-btn")?.addEventListener("click", async () => {
@@ -962,8 +1103,10 @@ async function initAdmin() {
     }
   });
   if (qs("admin-product-create-btn") || qs("admin-products")) {
+    await loadProductMetaOptions().catch(() => {});
     await loadAdminProducts().catch(() => {});
   }
+  qs("admin-products-search")?.addEventListener("input", () => { void loadAdminProducts(); });
   qs("admin-product-create-btn")?.addEventListener("click", async () => {
     try {
       const payload = {
@@ -989,6 +1132,35 @@ async function initAdmin() {
     } catch (e) {
       qs("admin-product-result").textContent = e.message;
       showToast({ type: "error", message: e.message || "Could not add product" });
+    }
+  });
+  if (qs("admin-categories") || qs("admin-collections")) {
+    await loadAdminCatalog().catch(() => {});
+  }
+  qs("admin-category-add-btn")?.addEventListener("click", async () => {
+    try {
+      const name = qs("admin-category-name").value.trim();
+      if (!name) throw new Error("Category name is required");
+      await sendJson("/api/admin/categories", "POST", { name });
+      qs("admin-category-name").value = "";
+      qs("admin-category-result").textContent = "Category added";
+      await loadAdminCatalog();
+    } catch (e) {
+      qs("admin-category-result").textContent = e.message;
+      showToast({ type: "error", message: e.message || "Could not add category" });
+    }
+  });
+  qs("admin-collection-add-btn")?.addEventListener("click", async () => {
+    try {
+      const name = qs("admin-collection-name").value.trim();
+      if (!name) throw new Error("Collection name is required");
+      await sendJson("/api/admin/collections", "POST", { name, description: "" });
+      qs("admin-collection-name").value = "";
+      qs("admin-collection-result").textContent = "Collection added";
+      await loadAdminCatalog();
+    } catch (e) {
+      qs("admin-collection-result").textContent = e.message;
+      showToast({ type: "error", message: e.message || "Could not add collection" });
     }
   });
   qs("seed-everything-btn")?.addEventListener("click", async () => {

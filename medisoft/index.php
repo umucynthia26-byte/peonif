@@ -29,6 +29,7 @@ if (!isset($_GET['page'])) {
         $adminSection = $segments[1] ?? 'dashboard';
         $map = [
             'dashboard' => 'admin_dashboard',
+            'products' => 'admin_products',
             'catalog' => 'admin_catalog',
             'orders' => 'admin_orders',
             'reviews' => 'admin_reviews',

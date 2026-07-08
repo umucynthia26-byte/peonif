@@ -33,7 +33,7 @@ class PageController
         $allowed = [
             'home', 'shop', 'product', 'builder', 'cart', 'checkout',
             'account', 'login', 'signup', 'admin', 'about', 'contact',
-            'admin_dashboard', 'admin_catalog', 'admin_orders', 'admin_reviews', 'admin_support', 'admin_activity',
+            'admin_dashboard', 'admin_products', 'admin_catalog', 'admin_orders', 'admin_reviews', 'admin_support', 'admin_activity',
             'terms', 'privacy', 'not_found'
         ];
         if (!in_array($page, $allowed, true)) {

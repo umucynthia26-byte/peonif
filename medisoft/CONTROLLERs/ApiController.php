@@ -50,6 +50,16 @@ class ApiController
             return;
         }
 
+        if ($route === 'api/categories' && $method === 'GET') {
+            echo json_encode($pdo->query("SELECT id, slug, name FROM categories ORDER BY name ASC")->fetchAll());
+            return;
+        }
+
+        if ($route === 'api/collections' && $method === 'GET') {
+            echo json_encode($pdo->query("SELECT id, slug, name, description FROM collections ORDER BY name ASC")->fetchAll());
+            return;
+        }
+
         if ($route === 'api/metrics' && $method === 'GET') {
             echo json_encode([
                 'revenue_by_day' => $orderModel->revenueByDay(),
@@ -623,6 +633,73 @@ class ApiController
             return;
         }
 
+        if ($route === 'api/admin/categories' && $method === 'POST') {
+            $user = $this->currentUser($userModel);
+            if (!$user || $user['role'] !== 'admin') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Admin only']);
+                return;
+            }
+            $name = trim((string) ($body['name'] ?? ''));
+            if ($name === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'Name is required']);
+                return;
+            }
+            $slug = $this->slugify($name);
+            $stmt = $pdo->prepare("INSERT INTO categories (slug, name) VALUES (?, ?)");
+            $stmt->execute([$slug, $name]);
+            echo json_encode(['id' => (int) $pdo->lastInsertId(), 'slug' => $slug, 'name' => $name]);
+            return;
+        }
+
+        if (preg_match('#^api/admin/categories/(\d+)$#', $route, $m) && $method === 'DELETE') {
+            $user = $this->currentUser($userModel);
+            if (!$user || $user['role'] !== 'admin') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Admin only']);
+                return;
+            }
+            $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
+            $stmt->execute([(int) $m[1]]);
+            echo json_encode(['ok' => true]);
+            return;
+        }
+
+        if ($route === 'api/admin/collections' && $method === 'POST') {
+            $user = $this->currentUser($userModel);
+            if (!$user || $user['role'] !== 'admin') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Admin only']);
+                return;
+            }
+            $name = trim((string) ($body['name'] ?? ''));
+            $description = trim((string) ($body['description'] ?? ''));
+            if ($name === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'Name is required']);
+                return;
+            }
+            $slug = $this->slugify($name);
+            $stmt = $pdo->prepare("INSERT INTO collections (slug, name, description) VALUES (?, ?, ?)");
+            $stmt->execute([$slug, $name, $description]);
+            echo json_encode(['id' => (int) $pdo->lastInsertId(), 'slug' => $slug, 'name' => $name, 'description' => $description]);
+            return;
+        }
+
+        if (preg_match('#^api/admin/collections/(\d+)$#', $route, $m) && $method === 'DELETE') {
+            $user = $this->currentUser($userModel);
+            if (!$user || $user['role'] !== 'admin') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Admin only']);
+                return;
+            }
+            $stmt = $pdo->prepare("DELETE FROM collections WHERE id = ?");
+            $stmt->execute([(int) $m[1]]);
+            echo json_encode(['ok' => true]);
+            return;
+        }
+
         if (preg_match('#^api/admin/products/(\d+)$#', $route, $m) && $method === 'PUT') {
             $user = $this->currentUser($userModel);
             if (!$user || $user['role'] !== 'admin') {
@@ -723,5 +800,16 @@ class ApiController
             'authorization_url' => (string) $decoded['data']['authorization_url'],
             'reference' => (string) ($decoded['data']['reference'] ?? ''),
         ];
+    }
+
+    private function slugify(string $name): string
+    {
+        $slug = strtolower(trim($name));
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
+        $slug = trim($slug, '-');
+        if ($slug === '') {
+            $slug = 'item-' . bin2hex(random_bytes(3));
+        }
+        return $slug;
     }
 }

@@ -26,14 +26,19 @@ $isActive = static fn(string $target): string => (($page ?? '') === $target) ? '
 
   <div class="mx-auto flex w-full max-w-7xl">
     <aside class="admin-sidebar sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 border-r lg:block">
-      <nav class="p-3">
+      <div class="flex h-full flex-col gap-1 p-3">
         <a href="/admin/dashboard" class="admin-nav-link<?= $isActive('admin_dashboard') ?>">Dashboard</a>
+        <a href="/admin/products" class="admin-nav-link<?= $isActive('admin_products') ?>">Products</a>
         <a href="/admin/catalog" class="admin-nav-link<?= $isActive('admin_catalog') ?>">Catalog</a>
         <a href="/admin/orders" class="admin-nav-link<?= $isActive('admin_orders') ?>">Orders</a>
         <a href="/admin/reviews" class="admin-nav-link<?= $isActive('admin_reviews') ?>">Reviews</a>
         <a href="/admin/support" class="admin-nav-link<?= $isActive('admin_support') ?>">Support</a>
         <a href="/admin/activity" class="admin-nav-link<?= $isActive('admin_activity') ?>">Activity</a>
-      </nav>
+        <button id="admin-sidebar-logout-btn" class="admin-nav-link mt-auto text-left">
+          <i data-lucide="log-out"></i>
+          <span class="ml-1">Sign out</span>
+        </button>
+      </div>
     </aside>
     <div class="min-w-0 flex-1 px-4 py-8 lg:px-8">
       <div class="mb-6">
