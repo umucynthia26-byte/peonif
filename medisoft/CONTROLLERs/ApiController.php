@@ -547,6 +547,55 @@ class ApiController
             return;
         }
 
+        if ($route === 'api/me/images' && $method === 'GET') {
+            $user = $this->currentUser($userModel);
+            if (!$user) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Login required']);
+                return;
+            }
+            $stmt = $pdo->prepare("SELECT id, url, created_at FROM user_images WHERE user_id = ? ORDER BY created_at DESC");
+            $stmt->execute([(int) $user['id']]);
+            echo json_encode($stmt->fetchAll());
+            return;
+        }
+
+        if ($route === 'api/me/images' && $method === 'POST') {
+            $user = $this->currentUser($userModel);
+            if (!$user) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Login required']);
+                return;
+            }
+            $files = $_FILES['images'] ?? $_FILES['images'] ?? null;
+            if (!$files || !isset($files['tmp_name']) || !is_array($files['tmp_name'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'No images uploaded']);
+                return;
+            }
+            $uploaded = 0;
+            $insert = $pdo->prepare("INSERT INTO user_images (user_id, url) VALUES (?, ?)");
+            foreach ($files['tmp_name'] as $idx => $tmpName) {
+                if (($files['error'][$idx] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !$tmpName) {
+                    continue;
+                }
+                $ext = pathinfo((string) ($files['name'][$idx] ?? ''), PATHINFO_EXTENSION) ?: 'jpg';
+                $name = 'user_' . (int) $user['id'] . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+                $target = __DIR__ . '/../public/images/' . $name;
+                if (@move_uploaded_file($tmpName, $target)) {
+                    $insert->execute([(int) $user['id'], '/images/' . $name]);
+                    $uploaded++;
+                }
+            }
+            if ($uploaded === 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'No valid images were uploaded']);
+                return;
+            }
+            echo json_encode(['ok' => true, 'uploaded' => $uploaded]);
+            return;
+        }
+
         if ($route === 'api/contact' && $method === 'POST') {
             $name = trim((string) ($body['name'] ?? ''));
             $email = trim((string) ($body['email'] ?? ''));

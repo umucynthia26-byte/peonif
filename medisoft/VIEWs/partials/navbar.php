@@ -14,8 +14,11 @@
         Cart
         <span id="nav-cart-count" class="nav-cart-count hidden">0</span>
       </a>
-      <a class="px-3 py-1.5 rounded-md hover:bg-accent inline-flex items-center gap-1.5" href="/account"><i data-lucide="user-round"></i>Account</a>
-      <a class="px-3 py-1.5 rounded-md hover:bg-accent inline-flex items-center gap-1.5" href="/admin"><i data-lucide="layout-dashboard"></i>Admin</a>
+      <?php if (($viewer['role'] ?? '') === 'admin'): ?>
+        <a class="px-3 py-1.5 rounded-md hover:bg-accent inline-flex items-center gap-1.5" href="/admin"><i data-lucide="layout-dashboard"></i>Admin</a>
+      <?php else: ?>
+        <a class="px-3 py-1.5 rounded-md hover:bg-accent inline-flex items-center gap-1.5" href="/account"><i data-lucide="user-round"></i>Account</a>
+      <?php endif; ?>
     </nav>
   </div>
 </header>

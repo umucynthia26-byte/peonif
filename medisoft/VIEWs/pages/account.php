@@ -86,22 +86,43 @@
     </div>
   </div>
 
-  <div id="tab-profile" class="tab-panel mt-4 hidden space-y-3 rounded-xl border bg-card p-4">
-    <input id="profile-name" class="w-full rounded-md border px-3 py-2" placeholder="Name" />
-    <input id="profile-phone" class="w-full rounded-md border px-3 py-2" placeholder="Phone" />
-    <input id="profile-address" class="w-full rounded-md border px-3 py-2" placeholder="Address" />
-    <input id="profile-city" class="w-full rounded-md border px-3 py-2" placeholder="City" />
-    <button id="profile-save-btn" class="rounded-md bg-primary px-4 py-2 text-primary-foreground">Save profile</button>
-    <div class="border-t pt-3">
-      <input id="current-password" type="password" class="w-full rounded-md border px-3 py-2" placeholder="Current password" />
-      <input id="new-password" type="password" class="mt-2 w-full rounded-md border px-3 py-2" placeholder="New password" />
-      <button id="password-save-btn" class="mt-2 rounded-md border px-4 py-2">Change password</button>
+  <div id="tab-profile" class="tab-panel mt-4 hidden space-y-6">
+    <div class="rounded-xl border bg-card p-4">
+      <h3 class="text-base font-semibold">Profile</h3>
+      <p class="mt-1 text-sm text-muted-foreground">Your delivery details pre-fill checkout so orders always reach the right place.</p>
+      <div class="mb-6 mt-5 flex items-center gap-4">
+        <button type="button" id="avatar-picker-btn" class="group relative">
+          <div id="profile-avatar-preview" class="inline-flex size-20 items-center justify-center overflow-hidden rounded-full bg-secondary text-xl font-medium text-secondary-foreground">U</div>
+          <span class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+            <i data-lucide="camera" class="text-white"></i>
+          </span>
+        </button>
+        <div>
+          <p class="text-sm font-medium">Profile photo</p>
+          <p class="text-xs text-muted-foreground">Click the photo to change it (max 5MB).</p>
+        </div>
+        <input id="avatar-file" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div><label class="text-sm font-medium">Full name</label><input id="profile-name" class="mt-2 w-full rounded-md border px-3 py-2" placeholder="Name" /></div>
+        <div><label class="text-sm font-medium">Phone</label><input id="profile-phone" class="mt-2 w-full rounded-md border px-3 py-2" placeholder="Phone" /></div>
+        <div><label class="text-sm font-medium">Delivery address</label><input id="profile-address" class="mt-2 w-full rounded-md border px-3 py-2" placeholder="Address" /></div>
+        <div><label class="text-sm font-medium">City</label><input id="profile-city" class="mt-2 w-full rounded-md border px-3 py-2" placeholder="City" /></div>
+      </div>
+      <button id="profile-save-btn" class="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground">Save Profile</button>
+      <p id="profile-result" class="mt-2 text-sm text-muted-foreground"></p>
     </div>
-    <div class="border-t pt-3">
-      <input id="avatar-file" type="file" class="w-full rounded-md border px-3 py-2" />
-      <button id="avatar-upload-btn" class="mt-2 rounded-md border px-4 py-2">Upload avatar</button>
+
+    <div class="rounded-xl border bg-card p-4">
+      <h3 class="text-base font-semibold">Change password</h3>
+      <p class="mt-1 text-sm text-muted-foreground">At least 8 characters.</p>
+      <input id="current-password" type="password" class="mt-4 w-full rounded-md border px-3 py-2" placeholder="Current password" />
+      <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <input id="new-password" type="password" class="w-full rounded-md border px-3 py-2" placeholder="New password" />
+        <input id="confirm-password" type="password" class="w-full rounded-md border px-3 py-2" placeholder="Repeat new password" />
+      </div>
+      <button id="password-save-btn" class="mt-3 rounded-md border px-4 py-2">Update Password</button>
+      <p id="account-security-result" class="mt-2 text-sm text-muted-foreground"></p>
     </div>
-    <p id="profile-result" class="text-sm text-muted-foreground"></p>
-    <p id="account-security-result" class="text-sm text-muted-foreground"></p>
   </div>
 </section>

@@ -14,11 +14,13 @@
   <script defer src="/assets/app.js"></script>
 </head>
 <body class="bg-background text-foreground page-<?= htmlspecialchars($page) ?>">
-  <?php include __DIR__ . '/partials/navbar.php'; ?>
+  <?php if ($page !== 'admin' && !str_starts_with($page, 'admin_')): ?>
+    <?php include __DIR__ . '/partials/navbar.php'; ?>
+  <?php endif; ?>
   <main>
     <?php include $pageFile; ?>
   </main>
-  <?php if (!in_array($page, ['login', 'signup'], true)): ?>
+  <?php if (!in_array($page, ['login', 'signup', 'admin'], true) && !str_starts_with($page, 'admin_')): ?>
     <?php include __DIR__ . '/partials/footer.php'; ?>
   <?php endif; ?>
 </body>

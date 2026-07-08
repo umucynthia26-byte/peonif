@@ -660,6 +660,14 @@ async function initAccount() {
       qs("profile-address").value = me.user.address || "";
       qs("profile-city").value = me.user.city || "";
     }
+    const avatarPreview = qs("profile-avatar-preview");
+    if (avatarPreview) {
+      const initials = (me.user.name || "U").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "U";
+      avatarPreview.textContent = initials;
+      if (me.user.avatar_url) {
+        avatarPreview.innerHTML = `<img src="${me.user.avatar_url}" alt="${me.user.name}" class="size-full rounded-full object-cover" />`;
+      }
+    }
     const [orders, notes] = await Promise.all([
       getJson("/api/me/orders"),
       getJson("/api/me/notifications"),
@@ -774,11 +782,15 @@ async function initAccount() {
         showToast({ type: "error", message: e.message || "Could not save profile" });
       }
     });
+    qs("avatar-picker-btn")?.addEventListener("click", () => qs("avatar-file")?.click());
     qs("password-save-btn")?.addEventListener("click", async () => {
       try {
+        const next = qs("new-password").value;
+        const confirm = qs("confirm-password")?.value || "";
+        if (next !== confirm) throw new Error("New passwords do not match");
         await sendJson("/api/me/password", "POST", {
           current_password: qs("current-password").value,
-          new_password: qs("new-password").value,
+          new_password: next,
         });
         qs("account-security-result").textContent = "Password changed.";
         showToast("Password changed");
@@ -801,29 +813,68 @@ async function initAccount() {
         showToast({ type: "error", message: e.message || "Could not upload avatar" });
       }
     });
+    qs("avatar-file")?.addEventListener("change", async () => {
+      try {
+        const f = qs("avatar-file").files?.[0];
+        if (!f) return;
+        const fd = new FormData();
+        fd.append("image", f);
+        const out = await sendForm("/api/me/avatar", "POST", fd);
+        if (avatarPreview) avatarPreview.innerHTML = `<img src="${out.url}" alt="${me.user.name}" class="size-full rounded-full object-cover" />`;
+        showToast("Profile photo updated");
+      } catch (e) {
+        showToast({ type: "error", message: e.message || "Could not upload profile photo" });
+      } finally {
+        qs("avatar-file").value = "";
+      }
+    });
   } catch {
     qs("me-badge").textContent = "Please login first.";
   }
 }
 
 async function initAdmin() {
-  if (!qs("revenueChart")) return;
-  try {
-    const stats = await getJson("/api/admin/stats");
-    if (qs("admin-stat-revenue")) qs("admin-stat-revenue").textContent = moneyCompact(stats.revenue_cents);
-    if (qs("admin-stat-orders")) qs("admin-stat-orders").textContent = String(stats.total_orders);
-    if (qs("admin-stat-active")) qs("admin-stat-active").textContent = String(stats.active_orders);
-    if (qs("admin-stat-products")) qs("admin-stat-products").textContent = String(stats.products);
-    if (qs("admin-stat-customers")) qs("admin-stat-customers").textContent = String(stats.customers);
-  } catch {}
-  const metrics = await getJson("/api/admin/metrics");
-  new Chart(qs("revenueChart"), { type: "line", data: { labels: metrics.revenue_by_day.map((r) => r.day), datasets: [{ label: "Revenue", data: metrics.revenue_by_day.map((r) => Number(r.revenue_cents) / 100), borderColor: "#5b2a52", backgroundColor: "rgba(91,42,82,.15)" }] } });
-  new Chart(qs("statusChart"), { type: "bar", data: { labels: metrics.orders_by_status.map((s) => s.status), datasets: [{ label: "Orders", data: metrics.orders_by_status.map((s) => s.count), backgroundColor: "#cd8d2f" }] } });
-  const top = qs("top-products"); top.innerHTML = "";
-  metrics.top_products.forEach((p) => { const li = document.createElement("li"); li.className = "py-2 border-b text-sm"; li.textContent = `${p.name} — ${p.sold} sold`; top.appendChild(li); });
+  const loadAdminProducts = async () => {
+    const root = qs("admin-products");
+    if (!root) return;
+    const products = await getJson("/api/products");
+    root.innerHTML = "";
+    products.forEach((p) => {
+      const li = document.createElement("li");
+      li.className = "py-2 text-sm";
+      li.innerHTML = `<div class="flex items-center justify-between gap-2"><p>${p.name} <span class="text-xs text-muted-foreground">(${p.slug})</span></p><span class="text-xs text-muted-foreground">${money(p.price_cents)}${Number(p.discount_percent || 0) ? ` · -${p.discount_percent}%` : ""}</span></div>`;
+      root.appendChild(li);
+    });
+  };
+  if (qs("revenueChart") || qs("admin-stat-revenue")) {
+    try {
+      const stats = await getJson("/api/admin/stats");
+      if (qs("admin-stat-revenue")) qs("admin-stat-revenue").textContent = moneyCompact(stats.revenue_cents);
+      if (qs("admin-stat-orders")) qs("admin-stat-orders").textContent = String(stats.total_orders);
+      if (qs("admin-stat-active")) qs("admin-stat-active").textContent = String(stats.active_orders);
+      if (qs("admin-stat-products")) qs("admin-stat-products").textContent = String(stats.products);
+      if (qs("admin-stat-customers")) qs("admin-stat-customers").textContent = String(stats.customers);
+    } catch {}
+    try {
+      const metrics = await getJson("/api/admin/metrics");
+      if (qs("revenueChart")) {
+        new Chart(qs("revenueChart"), { type: "line", data: { labels: metrics.revenue_by_day.map((r) => r.day), datasets: [{ label: "Revenue", data: metrics.revenue_by_day.map((r) => Number(r.revenue_cents) / 100), borderColor: "#5b2a52", backgroundColor: "rgba(91,42,82,.15)" }] } });
+      }
+      if (qs("statusChart")) {
+        new Chart(qs("statusChart"), { type: "bar", data: { labels: metrics.orders_by_status.map((s) => s.status), datasets: [{ label: "Orders", data: metrics.orders_by_status.map((s) => s.count), backgroundColor: "#cd8d2f" }] } });
+      }
+      const top = qs("top-products");
+      if (top) {
+        top.innerHTML = "";
+        metrics.top_products.forEach((p) => { const li = document.createElement("li"); li.className = "py-2 border-b text-sm"; li.textContent = `${p.name} — ${p.sold} sold`; top.appendChild(li); });
+      }
+    } catch {}
+  }
   try {
     const orders = await getJson("/api/admin/orders");
-    const root = qs("admin-orders"); root.innerHTML = "";
+    const root = qs("admin-orders");
+    if (!root) throw new Error("skip");
+    root.innerHTML = "";
     orders.forEach((o) => {
       const li = document.createElement("li");
       li.className = "py-2 border-b text-sm";
@@ -910,9 +961,44 @@ async function initAdmin() {
       showToast({ type: "error", message: e.message || "Could not upload image" });
     }
   });
+  if (qs("admin-product-create-btn") || qs("admin-products")) {
+    await loadAdminProducts().catch(() => {});
+  }
+  qs("admin-product-create-btn")?.addEventListener("click", async () => {
+    try {
+      const payload = {
+        name: qs("admin-product-name").value.trim(),
+        slug: qs("admin-product-slug").value.trim() || undefined,
+        description: qs("admin-product-description").value.trim(),
+        category: qs("admin-product-category").value,
+        collection: qs("admin-product-collection").value,
+        price_cents: Number(qs("admin-product-price").value || 0),
+        discount_percent: Number(qs("admin-product-discount").value || 0),
+        image_url: qs("admin-product-image-url").value.trim() || "/images/hero.jpg",
+        in_stock: qs("admin-product-in-stock").checked ? 1 : 0,
+      };
+      if (!payload.name || !payload.description || payload.price_cents <= 0) {
+        throw new Error("Name, description and price are required");
+      }
+      const created = await sendJson("/api/admin/products", "POST", payload);
+      qs("admin-product-result").textContent = `Added ${created.name}`;
+      showToast("Product added");
+      ["admin-product-name","admin-product-slug","admin-product-description","admin-product-price","admin-product-discount","admin-product-image-url"].forEach((id) => { if (qs(id)) qs(id).value = ""; });
+      qs("admin-product-in-stock").checked = true;
+      await loadAdminProducts();
+    } catch (e) {
+      qs("admin-product-result").textContent = e.message;
+      showToast({ type: "error", message: e.message || "Could not add product" });
+    }
+  });
   qs("seed-everything-btn")?.addEventListener("click", async () => {
-    await sendJson("/api/seed/everything", "POST");
-    window.location.reload();
+    try {
+      await sendJson("/api/seed/everything", "POST");
+      showToast("Database reseeded");
+      window.location.reload();
+    } catch (e) {
+      showToast({ type: "error", message: e.message || "Could not reseed" });
+    }
   });
 }
 

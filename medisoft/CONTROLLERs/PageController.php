@@ -21,18 +21,19 @@ class PageController
             header('Location: /login');
             exit;
         }
-        if ($page === 'admin' && !$isAdmin) {
+        if (($page === 'admin' || str_starts_with($page, 'admin_')) && !$isAdmin) {
             header('Location: ' . ($isLoggedIn ? '/account' : '/login'));
             exit;
         }
         if (in_array($page, ['login', 'signup'], true) && $isLoggedIn) {
-            header('Location: ' . ($isAdmin ? '/admin' : '/account'));
+            header('Location: ' . ($isAdmin ? '/admin/dashboard' : '/account'));
             exit;
         }
 
         $allowed = [
             'home', 'shop', 'product', 'builder', 'cart', 'checkout',
             'account', 'login', 'signup', 'admin', 'about', 'contact',
+            'admin_dashboard', 'admin_catalog', 'admin_orders', 'admin_reviews', 'admin_support', 'admin_activity',
             'terms', 'privacy', 'not_found'
         ];
         if (!in_array($page, $allowed, true)) {
@@ -45,6 +46,7 @@ class PageController
             $page = 'not_found';
             http_response_code(404);
         }
+        $viewer = $user;
         include __DIR__ . '/../VIEWs/layout.php';
     }
 

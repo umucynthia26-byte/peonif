@@ -25,6 +25,17 @@ if (!isset($_GET['page'])) {
     $segments = $trimmed === '' ? [] : explode('/', $trimmed);
     if (count($segments) === 0) {
         $_GET['page'] = 'home';
+    } elseif ($segments[0] === 'admin') {
+        $adminSection = $segments[1] ?? 'dashboard';
+        $map = [
+            'dashboard' => 'admin_dashboard',
+            'catalog' => 'admin_catalog',
+            'orders' => 'admin_orders',
+            'reviews' => 'admin_reviews',
+            'support' => 'admin_support',
+            'activity' => 'admin_activity',
+        ];
+        $_GET['page'] = $map[$adminSection] ?? 'not_found';
     } elseif ($segments[0] === 'shop' && isset($segments[1]) && $segments[1] !== '') {
         $_GET['page'] = 'product';
         $_GET['slug'] = urldecode($segments[1]);

@@ -316,6 +316,45 @@ footer {
   box-shadow: 0 8px 18px rgba(21, 14, 19, 0.05);
 }
 
+#avatar-picker-btn:hover {
+  transform: none;
+}
+
+/* Admin workspace */
+.admin-shell {
+  background: color-mix(in oklab, var(--background), white 1%);
+}
+
+.admin-topbar {
+  border-bottom-color: color-mix(in oklab, var(--border), white 16%);
+}
+
+.admin-sidebar {
+  background: color-mix(in oklab, var(--background), var(--secondary) 8%);
+  border-right-color: color-mix(in oklab, var(--border), white 18%);
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  border-radius: 0.5rem;
+  padding: 0 0.625rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.admin-nav-link:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.admin-nav-link.is-active {
+  background: var(--secondary);
+  color: var(--foreground);
+  font-weight: 500;
+}
+
 /* Toast notifications */
 #toast-root {
   position: fixed;
