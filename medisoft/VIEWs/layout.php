@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/index-_ADhqyCK.css" />
+  <link rel="stylesheet" href="/assets/index.css" />
   <link rel="stylesheet" href="/assets/app.css" />
   <script defer src="https://unpkg.com/lucide@latest"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
