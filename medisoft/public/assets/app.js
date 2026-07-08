@@ -1157,6 +1157,10 @@ async function initAdmin() {
       fd.append("image", f);
       const out = await sendForm("/api/admin/upload", "POST", fd);
       qs("admin-upload-result").textContent = `Uploaded: ${out.url}`;
+      if (qs("admin-product-image-url")) {
+        qs("admin-product-image-url").value = out.url;
+      }
+      showToast("Image uploaded");
     } catch (e) {
       qs("admin-upload-result").textContent = e.message;
       showToast({ type: "error", message: e.message || "Could not upload image" });

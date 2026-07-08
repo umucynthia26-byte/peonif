@@ -3,18 +3,24 @@ $adminTitle = 'Products';
 $adminSubtitle = 'Search, add and manage boutique products.';
 include __DIR__ . '/../partials/admin_workspace_start.php';
 ?>
-<div class="rounded-xl border bg-card p-4">
+<div class="admin-products-panel rounded-xl border bg-card p-4">
+  <div class="mb-3 flex items-center justify-between gap-2">
+    <div>
+      <h2 class="font-heading text-2xl">Products</h2>
+      <p class="text-sm text-muted-foreground">Manage inventory, pricing and stock states.</p>
+    </div>
+  </div>
   <div class="mb-4 flex flex-wrap items-center gap-2">
-    <input id="admin-products-search" class="min-w-52 flex-1 rounded-md border px-3 py-2" placeholder="Search products..." />
-    <button id="admin-product-open-btn" class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-primary-foreground">
+    <input id="admin-products-search" class="admin-products-search min-w-52 flex-1 rounded-md border px-3 py-2" placeholder="Search by product name or slug..." />
+    <button id="admin-product-open-btn" class="admin-product-open-btn inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-primary-foreground">
       <i data-lucide="plus"></i>
       New Product
     </button>
   </div>
-  <div class="overflow-x-auto">
-    <table class="w-full min-w-[760px] text-sm">
+  <div class="admin-products-table-wrap overflow-x-auto rounded-lg border">
+    <table class="admin-products-table w-full min-w-[760px] text-sm">
       <thead>
-        <tr class="border-b text-left text-xs text-muted-foreground">
+        <tr class="text-left text-xs text-muted-foreground">
           <th class="py-2 pr-3">Photo</th>
           <th class="py-2 pr-3">Name</th>
           <th class="py-2 pr-3">Category</th>
@@ -30,10 +36,10 @@ include __DIR__ . '/../partials/admin_workspace_start.php';
 </div>
 <div id="admin-product-modal" class="admin-modal hidden">
   <div id="admin-product-modal-backdrop" class="admin-modal-backdrop"></div>
-  <div class="admin-modal-card rounded-xl border bg-card p-4">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 id="admin-product-modal-title" class="font-heading text-xl">New Product</h2>
-      <button id="admin-product-modal-close-btn" class="rounded-md border px-2 py-1 text-xs">Close</button>
+  <div class="admin-modal-card rounded-xl border bg-card p-5">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 id="admin-product-modal-title" class="font-heading text-2xl">New Product</h2>
+      <button id="admin-product-modal-close-btn" class="rounded-md border px-3 py-1.5 text-xs">Close</button>
     </div>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div class="space-y-2">
@@ -68,6 +74,16 @@ include __DIR__ . '/../partials/admin_workspace_start.php';
         <label class="text-sm font-medium">Image URL</label>
         <input id="admin-product-image-url" class="w-full rounded-md border px-3 py-2" placeholder="/images/golden-hour.jpg" />
       </div>
+      <div class="space-y-2 md:col-span-2">
+        <label class="text-sm font-medium">Or upload image</label>
+        <div class="rounded-lg border p-3">
+          <input id="admin-upload-file" type="file" class="w-full rounded-md border px-3 py-2" />
+          <div class="mt-2 flex items-center gap-2">
+            <button id="admin-upload-btn" type="button" class="rounded-md border px-3 py-2 text-sm">Upload</button>
+            <p id="admin-upload-result" class="text-sm text-muted-foreground"></p>
+          </div>
+        </div>
+      </div>
       <label class="inline-flex items-center gap-2 text-sm md:col-span-2"><input id="admin-product-in-stock" type="checkbox" checked /> In stock</label>
     </div>
     <div class="mt-4 flex items-center gap-2">
@@ -75,11 +91,5 @@ include __DIR__ . '/../partials/admin_workspace_start.php';
       <p id="admin-product-result" class="text-sm text-muted-foreground"></p>
     </div>
   </div>
-</div>
-<div class="mt-6 rounded-xl border bg-card p-4">
-  <h2 class="font-heading text-xl">Upload product image</h2>
-  <input id="admin-upload-file" type="file" class="mt-2 w-full rounded-md border px-3 py-2" />
-  <button id="admin-upload-btn" class="mt-2 rounded-md border px-3 py-2">Upload</button>
-  <p id="admin-upload-result" class="mt-2 text-sm text-muted-foreground"></p>
 </div>
 <?php include __DIR__ . '/../partials/admin_workspace_end.php'; ?>

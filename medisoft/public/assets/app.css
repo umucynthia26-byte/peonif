@@ -355,6 +355,52 @@ footer {
   font-weight: 500;
 }
 
+.admin-products-panel,
+.admin-products-upload {
+  background: var(--card, #ffffff);
+  border-color: var(--border, #ddd6e3);
+}
+
+.admin-products-search {
+  min-height: 2.5rem;
+  font-size: 0.95rem;
+  background: var(--background, #fcfafc);
+}
+
+.admin-product-open-btn {
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+
+.admin-products-table-wrap {
+  border-color: color-mix(in oklab, var(--border, #ddd6e3), white 15%);
+  background: var(--background, #ffffff);
+}
+
+.admin-products-table thead tr {
+  background: color-mix(in oklab, var(--secondary, #f2eaf1), transparent 35%);
+  border-bottom: 1px solid color-mix(in oklab, var(--border, #ddd6e3), white 18%);
+}
+
+.admin-products-table th {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground, #5f5564);
+}
+
+.admin-products-table td {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  color: var(--foreground, #1f1722);
+}
+
+#admin-products-table-body tr:hover {
+  background: color-mix(in oklab, var(--accent, #f8f4f8), transparent 10%);
+}
+
 .admin-modal {
   position: fixed;
   inset: 0;
@@ -382,7 +428,10 @@ footer {
   width: min(760px, calc(100vw - 1.5rem));
   max-height: calc(100vh - 2rem);
   overflow: auto;
-  box-shadow: 0 30px 60px rgba(14, 10, 14, 0.28);
+  border-color: color-mix(in oklab, var(--border, #ddd6e3), white 14%);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--card, #ffffff), white 2%), var(--card, #ffffff));
+  box-shadow: 0 30px 70px rgba(14, 10, 14, 0.34);
 }
 
 #admin-products-table-body tr {
@@ -394,6 +443,48 @@ footer {
   height: 2.5rem;
   object-fit: cover;
   border-radius: 0.5rem;
+  border: 1px solid color-mix(in oklab, var(--border, #ddd6e3), white 18%);
+}
+
+#admin-products-table-body .edit-product,
+#admin-products-table-body .delete-product {
+  min-height: 1.9rem;
+  min-width: 3.5rem;
+  font-weight: 600;
+}
+
+#admin-product-save-btn {
+  font-weight: 600;
+  min-height: 2.5rem;
+}
+
+#admin-product-modal-title {
+  line-height: 1;
+}
+
+#admin-product-modal .space-y-2 > label {
+  color: var(--foreground, #201621);
+}
+
+#admin-product-modal .rounded-lg.border {
+  border-color: color-mix(in oklab, var(--border, #ddd6e3), white 14%);
+  background: color-mix(in oklab, var(--background, #faf7fb), white 4%);
+}
+
+#admin-upload-btn {
+  min-height: 2.25rem;
+  font-weight: 600;
+}
+
+#admin-product-result,
+#admin-upload-result {
+  min-height: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .admin-products-panel h2 {
+    font-size: 1.6rem;
+  }
 }
 
 /* Toast notifications */
