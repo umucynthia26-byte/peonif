@@ -355,6 +355,47 @@ footer {
   font-weight: 500;
 }
 
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-modal.hidden {
+  display: none;
+}
+
+.admin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 11, 16, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.admin-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(760px, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  box-shadow: 0 30px 60px rgba(14, 10, 14, 0.28);
+}
+
+#admin-products-table-body tr {
+  border-bottom: 1px solid color-mix(in oklab, var(--border), white 25%);
+}
+
+.admin-product-thumb {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
 /* Toast notifications */
 #toast-root {
   position: fixed;

@@ -844,29 +844,89 @@ async function initAdmin() {
   };
   qs("admin-logout-btn")?.addEventListener("click", logoutAdmin);
   qs("admin-sidebar-logout-btn")?.addEventListener("click", logoutAdmin);
-  const loadAdminProducts = async () => {
-    const root = qs("admin-products");
+  const adminProductState = {
+    list: [],
+    editingId: null,
+  };
+  const clearProductForm = () => {
+    ["admin-product-name","admin-product-slug","admin-product-description","admin-product-price","admin-product-discount","admin-product-image-url"].forEach((id) => {
+      if (qs(id)) qs(id).value = "";
+    });
+    if (qs("admin-product-in-stock")) qs("admin-product-in-stock").checked = true;
+    if (qs("admin-product-result")) qs("admin-product-result").textContent = "";
+  };
+  const openProductModal = (product = null) => {
+    const modal = qs("admin-product-modal");
+    if (!modal) return;
+    adminProductState.editingId = product ? Number(product.id) : null;
+    qs("admin-product-modal-title").textContent = product ? "Edit Product" : "New Product";
+    if (product) {
+      qs("admin-product-name").value = product.name || "";
+      qs("admin-product-slug").value = product.slug || "";
+      qs("admin-product-description").value = product.description || "";
+      qs("admin-product-category").value = product.category || "";
+      qs("admin-product-collection").value = product.collection || "";
+      qs("admin-product-price").value = String(Number(product.price_cents || 0));
+      qs("admin-product-discount").value = String(Number(product.discount_percent || 0));
+      qs("admin-product-image-url").value = product.image_url || "";
+      qs("admin-product-in-stock").checked = Number(product.in_stock) !== 0;
+    } else {
+      clearProductForm();
+    }
+    modal.classList.remove("hidden");
+    window.lucide?.createIcons();
+  };
+  const closeProductModal = () => {
+    const modal = qs("admin-product-modal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    adminProductState.editingId = null;
+    clearProductForm();
+  };
+  const renderAdminProducts = () => {
+    const root = qs("admin-products-table-body");
     if (!root) return;
-    const products = await getJson("/api/products");
     const q = (qs("admin-products-search")?.value || "").trim().toLowerCase();
     root.innerHTML = "";
-    products
+    adminProductState.list
       .filter((p) => !q || p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q))
       .forEach((p) => {
-      const li = document.createElement("li");
-      li.className = "py-2 text-sm";
-      li.innerHTML = `<div class="flex items-center justify-between gap-2"><p>${p.name} <span class="text-xs text-muted-foreground">/${p.slug}</span></p><div class="flex items-center gap-2"><span class="text-xs text-muted-foreground">${money(p.price_cents)}${Number(p.discount_percent || 0) ? ` · -${p.discount_percent}%` : ""}</span><button class="delete-product inline-flex rounded-md border px-2 py-1 text-xs text-destructive">Delete</button></div></div>`;
-      li.querySelector(".delete-product")?.addEventListener("click", async () => {
-        try {
-          await sendJson(`/api/admin/products/${p.id}`, "DELETE");
-          showToast(`${p.name} removed`);
-          await loadAdminProducts();
-        } catch (e) {
-          showToast({ type: "error", message: e.message || "Could not delete product" });
-        }
+        const tr = document.createElement("tr");
+        tr.className = "align-middle";
+        tr.innerHTML = `
+          <td class="py-2 pr-3"><img class="admin-product-thumb" src="${p.image_url || "/images/hero.jpg"}" alt="${p.name}" /></td>
+          <td class="py-2 pr-3">
+            <div class="font-medium">${p.name}</div>
+            <div class="text-xs text-muted-foreground">/${p.slug}</div>
+          </td>
+          <td class="py-2 pr-3">${p.category || "—"}</td>
+          <td class="py-2 pr-3">${p.collection || "—"}</td>
+          <td class="py-2 pr-3 tabular-nums">${money(p.price_cents)}${Number(p.discount_percent || 0) ? ` <span class="text-xs text-muted-foreground">(-${p.discount_percent}%)</span>` : ""}</td>
+          <td class="py-2 pr-3">${Number(p.in_stock) ? `<span class="inline-flex rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">In stock</span>` : `<span class="inline-flex rounded-md border px-2 py-1 text-xs text-muted-foreground">Out</span>`}</td>
+          <td class="py-2 text-right">
+            <div class="inline-flex items-center gap-1">
+              <button class="edit-product rounded-md border px-2 py-1 text-xs">Edit</button>
+              <button class="delete-product rounded-md border px-2 py-1 text-xs text-destructive">Delete</button>
+            </div>
+          </td>
+        `;
+        tr.querySelector(".edit-product")?.addEventListener("click", () => openProductModal(p));
+        tr.querySelector(".delete-product")?.addEventListener("click", async () => {
+          try {
+            await sendJson(`/api/admin/products/${p.id}`, "DELETE");
+            showToast(`${p.name} removed`);
+            await loadAdminProducts();
+          } catch (e) {
+            showToast({ type: "error", message: e.message || "Could not delete product" });
+          }
+        });
+        root.appendChild(tr);
       });
-      root.appendChild(li);
-    });
+  };
+  const loadAdminProducts = async () => {
+    if (!qs("admin-products-table-body")) return;
+    adminProductState.list = await getJson("/api/products");
+    renderAdminProducts();
   };
   const loadProductMetaOptions = async () => {
     const catSelect = qs("admin-product-category");
@@ -1102,12 +1162,15 @@ async function initAdmin() {
       showToast({ type: "error", message: e.message || "Could not upload image" });
     }
   });
-  if (qs("admin-product-create-btn") || qs("admin-products")) {
+  if (qs("admin-product-open-btn") || qs("admin-products-table-body")) {
     await loadProductMetaOptions().catch(() => {});
     await loadAdminProducts().catch(() => {});
   }
-  qs("admin-products-search")?.addEventListener("input", () => { void loadAdminProducts(); });
-  qs("admin-product-create-btn")?.addEventListener("click", async () => {
+  qs("admin-products-search")?.addEventListener("input", renderAdminProducts);
+  qs("admin-product-open-btn")?.addEventListener("click", () => openProductModal());
+  qs("admin-product-modal-close-btn")?.addEventListener("click", closeProductModal);
+  qs("admin-product-modal-backdrop")?.addEventListener("click", closeProductModal);
+  qs("admin-product-save-btn")?.addEventListener("click", async () => {
     try {
       const payload = {
         name: qs("admin-product-name").value.trim(),
@@ -1123,15 +1186,20 @@ async function initAdmin() {
       if (!payload.name || !payload.description || payload.price_cents <= 0) {
         throw new Error("Name, description and price are required");
       }
-      const created = await sendJson("/api/admin/products", "POST", payload);
-      qs("admin-product-result").textContent = `Added ${created.name}`;
-      showToast("Product added");
-      ["admin-product-name","admin-product-slug","admin-product-description","admin-product-price","admin-product-discount","admin-product-image-url"].forEach((id) => { if (qs(id)) qs(id).value = ""; });
-      qs("admin-product-in-stock").checked = true;
+      if (adminProductState.editingId) {
+        const updated = await sendJson(`/api/admin/products/${adminProductState.editingId}`, "PUT", payload);
+        qs("admin-product-result").textContent = `Updated ${updated.name}`;
+        showToast("Product updated");
+      } else {
+        const created = await sendJson("/api/admin/products", "POST", payload);
+        qs("admin-product-result").textContent = `Added ${created.name}`;
+        showToast("Product added");
+      }
       await loadAdminProducts();
+      closeProductModal();
     } catch (e) {
       qs("admin-product-result").textContent = e.message;
-      showToast({ type: "error", message: e.message || "Could not add product" });
+      showToast({ type: "error", message: e.message || "Could not save product" });
     }
   });
   if (qs("admin-categories") || qs("admin-collections")) {
