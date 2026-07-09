@@ -1,5 +1,7 @@
 # Peonify 🌸
 
+> **Windows XAMPP version:** a complete PHP + MySQL + vanilla JS re-implementation lives in [`peonify-php/`](peonify-php/README-XAMPP.md) — copy it into `C:\xampp\htdocs\` and it runs with zero setup.
+
 A premium floral e-commerce platform built for a flower entrepreneur — no
 technical skills needed to run it. Curated storefront with real photography,
 delivery scheduling, a bouquet builder with live preview, customer accounts
